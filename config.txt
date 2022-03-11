@@ -1,0 +1,20 @@
+ladyangelVR
+qnIxw5VJzYUQWPoe
+
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://ladyangelVR:<password>@proyectovr.jlpld.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+client.connect(err => {
+  const collection = client.db("test").collection("devices");
+  // perform actions on the collection object
+  client.close();
+});
+
+Replace <password> with the password for the ladyangelVR user. Replace myFirstDatabase 
+with the name of the database that connections will use by default. Ensure any option params are URL encoded.
+
+*****
+heroku  https://git.heroku.com/vrprojectams.git (fetch)
+heroku  https://git.heroku.com/vrprojectams.git (push)
+origin  https://github.com/ladyangel1981/VRProject.git (fetch)
+origin  https://github.com/ladyangel1981/VRProject.git (push)
