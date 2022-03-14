@@ -33,8 +33,8 @@ app.listen(PORT, () => {
     if(error) {
         throw error;
     }
-    database = client.db("vrclassroom");
+    database = client.db(DB_NAME);
     collection = database.collection("courses");
-    console.log("Connected to vrclassroom" + "!");
+    console.log("Connected to database" + "!");
   });
 });
