@@ -23,9 +23,11 @@ app.get('/api/get_courses', function (req, res) {
     }
     res.json({
       message: "OK",
-      response: result})
+      response: result
+    })
 });
 });
+
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
