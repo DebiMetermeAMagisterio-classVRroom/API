@@ -29,9 +29,9 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/:name/:password', function (req, res){
-  var username = req.params.name;
-  var password = req.params.password;
+app.get('/api/login', function (req, res){
+  var username = req.body.name;
+  var password = req.body.password;
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
     if(error){
@@ -51,7 +51,7 @@ app.get('/api/login/:name/:password', function (req, res){
         res.json({
           status: "ERROR",
           message: "Authentication failed",
-          session_token : token
+          session_token : ""
         })
     }
   });
