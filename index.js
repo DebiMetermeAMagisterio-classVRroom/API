@@ -34,7 +34,7 @@ app.get('/api/login/:name/:password', function (req, res){
   var password = req.params.password;
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
-    if(error) {
+    if(username == "" && password == "") {
       res.json({
         status: "ERROR",
         message: "Authentication failed",
