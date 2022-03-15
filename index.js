@@ -19,9 +19,9 @@ var database, collection;
 app.get('/api/get_courses', function (req, res) {
   collection.find().toArray((error, result) => {
     if(error) {
-        res.status(500).send(error);
+        res.send("Error")
     }
-    console.log(res.json(result))
+    res.send("OK")
 });
 });
 
