@@ -52,7 +52,7 @@ app.get('/api/login/', function (req, res){
         res.json({
           status: "ERROR",
           message: "Authentication failed",
-          session_token : token
+          session_token : ""
         })
     }
   });
