@@ -28,6 +28,20 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
+app.get('/api/login/:name/:password', function (req, res){
+  var username = req.params.name;
+  var password = req.params.password;
+  collection = database.collection("users");
+  collection.findOne({"first_name": username,"password":password}, (error,result)=>{
+    if(error) {
+      res.send("Error")
+    }
+    res.json({
+      message: "OK",
+      response: result
+    })
+  });
+});
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
