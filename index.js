@@ -32,8 +32,6 @@ app.get('/api/get_courses', function (req, res) {
 app.get('/api/login/:name/:password', function (req, res){
   var username = req.params.name;
   var password = req.params.password;
-  var tokenToHash = username+password;
-  var token = crypto.createHash('sha256').update(tokenToHash);
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
     if(error) {
@@ -43,11 +41,13 @@ app.get('/api/login/:name/:password', function (req, res){
         session_token : token
       })
     }
-
+    var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
+    var tokenToHash = username+password+randNum;
+    var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
     res.json({
       status: "OK",
       message: "Correct login, token created",
-      session_token : ""
+      session_token : token
     })
   });
 });
