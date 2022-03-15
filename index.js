@@ -31,7 +31,7 @@ app.get('/api/get_courses', function (req, res) {
 });
 
 app.get('/api/login', function (req, res){
-  var user = req.body;
+  var user = req.query;
   collection = database.collection("users");
   collection.findOne({"first_name":user.name,"password":user.password}, (error,result)=>{
     if(error){
