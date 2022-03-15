@@ -16,6 +16,11 @@ app.use(bodyParser.json());
 
 var database, collection;
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.get('/api/get_courses', function (req, res) {
   collection.find().toArray((error, result) => {
@@ -30,11 +35,11 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/:name/:password', function (req, res){
-  var name = req.params.name;
-  var password = req.params.password
+app.get('/api/login', function (req, res){
+  var username = req.query.username;
+  var password = req.query.password;
   collection = database.collection("users");
-  collection.findOne({"first_name":name,"password":password}, (error,result)=>{
+  collection.findOne({"first_name":username,"password":password}, (error,result)=>{
     if(error){
       res.json({
         status: "ERROR",
@@ -44,7 +49,7 @@ app.get('/api/login/:name/:password', function (req, res){
     }
     if(result) {
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-      var tokenToHash = name+password+randNum;
+      var tokenToHash = username+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
       res.json({
         status: "OK",
@@ -54,6 +59,7 @@ app.get('/api/login/:name/:password', function (req, res){
     }else{
       res.json({
         status: "ERROR",
+        query: req.body,
         message: "Authentication failed",
         session_token : ""
       })
