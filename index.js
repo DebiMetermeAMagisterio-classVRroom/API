@@ -58,7 +58,6 @@ app.get('/api/login', function (req, res){
       })
       collection.updateOne({"first_name":username,"password":password},{ $set:{"session_token":token}},function(err,res){
         if(err) throw err;
-        console.log("user updated")
       })
     }else{
       res.json({
@@ -70,6 +69,41 @@ app.get('/api/login', function (req, res){
     }
   });
 });
+
+app.get('/api/logout', function (req, res){
+  var token = req.query.token;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error){
+      res.json({
+        status: "ERROR",
+        message: "Session Token rquired"
+      })
+    }
+    if(result){
+      if(token == undefined || token == ""){
+        res.json({
+          status: "ERROR",
+          message: "Session Token rquired"
+        })
+        }
+        else{
+          res.json({
+            status: "OK",
+            message: "Session succsesfully closed"
+          })
+      }
+    }
+    else{
+        res.json({
+          status: "ERROR",
+          message: "Session Token rquired"
+        })
+    }
+  });
+
+});
+
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
