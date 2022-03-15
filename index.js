@@ -31,7 +31,7 @@ app.get('/api/get_courses', function (req, res) {
 });
 
 app.get('/api/login', function (req, res){
-  var user = req.query;
+  var user = req.body;
   collection = database.collection("users");
   collection.findOne({"first_name":user.name,"password":user.password}, (error,result)=>{
     if(error){
@@ -53,7 +53,7 @@ app.get('/api/login', function (req, res){
     }else{
       res.json({
         status: "ERROR",
-        query: req.query,
+        query: req.body,
         message: "Authentication failed",
         session_token : ""
       })
