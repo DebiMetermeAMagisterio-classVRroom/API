@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require("body-parser");
@@ -31,14 +32,22 @@ app.get('/api/get_courses', function (req, res) {
 app.get('/api/login/:name/:password', function (req, res){
   var username = req.params.name;
   var password = req.params.password;
+  var tokenToHash = username+password;
+  var token = crypto.createHash('sha256').update(tokenToHash);
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
     if(error) {
-      res.send("Error")
+      res.json({
+        status: "ERROR",
+        message: "Authentication failed",
+        session_token : token
+      })
     }
+
     res.json({
-      message: "OK",
-      response: result
+      status: "OK",
+      message: "Correct login, token created",
+      session_token : ""
     })
   });
 });
