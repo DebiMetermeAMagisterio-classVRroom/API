@@ -53,6 +53,7 @@ app.get('/api/login', function (req, res){
     }else{
       res.json({
         status: "ERROR",
+        query: req.query,
         message: "Authentication failed",
         session_token : ""
       })
