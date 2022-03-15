@@ -56,6 +56,10 @@ app.get('/api/login', function (req, res){
         message: "Correct login, token created",
         session_token : token
       })
+      collection.updateOne({"first_name":username,"password":password},{"session_token":token},function(err,res){
+        if(err) throw err;
+        console.log("user updated")
+      })
     }else{
       res.json({
         status: "ERROR",
