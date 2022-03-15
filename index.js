@@ -30,7 +30,7 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/', function (req, res){
+app.get('/api/login', function (req, res){
   var username = req.body.name;
   var password = req.body.password;
   collection = database.collection("users");
