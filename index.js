@@ -21,7 +21,7 @@ app.get('/api/get_courses', function (req, res) {
     if(error) {
         res.send("Error")
     }
-    res.send("OK")
+    res.json("OK",result)
 });
 });
 
