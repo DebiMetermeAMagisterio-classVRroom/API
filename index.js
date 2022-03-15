@@ -21,7 +21,9 @@ app.get('/api/get_courses', function (req, res) {
     if(error) {
         res.send("Error")
     }
-    res.json("OK",result)
+    res.json({
+      message: "OK",
+      response: result})
 });
 });
 
