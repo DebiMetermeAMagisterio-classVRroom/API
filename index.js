@@ -13,7 +13,6 @@ const PORT = process.env.PORT || newLocal;
 const uri = process.env.DB_URI;
 client= null;
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 var database, collection;
 
 
@@ -34,7 +33,7 @@ app.get('/api/login', function (req, res){
   var username = req.body.name;
   var password = req.body.password;
   collection = database.collection("users");
-  collection.findOne({"first_name": username,"password":password}, (error,result)=>{
+  collection.findOne({"first_name":username,"password":password}, (error,result)=>{
     if(error){
 
     }
