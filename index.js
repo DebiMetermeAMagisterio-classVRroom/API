@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require("body-parser");
@@ -33,13 +34,26 @@ app.get('/api/login/:name/:password', function (req, res){
   var password = req.params.password;
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
-    if(error) {
-      res.send("Error")
+    if(error){
+
     }
-    res.json({
-      message: "OK",
-      response: result
-    })
+    if(result){
+      var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
+      var tokenToHash = username+password+randNum;
+      var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
+      res.json({
+        status: "OK",
+        message: "Correct login, token created",
+        session_token : token
+      })
+    }
+    else{
+        res.json({
+          status: "ERROR",
+          message: "Authentication failed",
+          session_token : token
+        })
+    }
   });
 });
 
