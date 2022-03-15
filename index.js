@@ -22,6 +22,7 @@ app.get('/api/get_courses', function (req, res) {
     if(error) {
         res.send("Error")
     }
+    console.log(result)
     res.json({
       message: "OK",
       response: result
@@ -29,11 +30,10 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/:name/:password', function (req, res){
-  var name = req.params.name;
-  var password = req.params.password
+app.get('/api/login', function (req, res){
+  var user = req.body;
   collection = database.collection("users");
-  collection.findOne({"first_name":name,"password":password}, (error,result)=>{
+  collection.findOne({"first_name":user.name,"password":user.password}, (error,result)=>{
     if(error){
       res.json({
         status: "ERROR",
@@ -43,7 +43,7 @@ app.get('/api/login/:name/:password', function (req, res){
     }
     if(result) {
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-      var tokenToHash = username+password+randNum;
+      var tokenToHash = user.name+user.password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
       res.json({
         status: "OK",
