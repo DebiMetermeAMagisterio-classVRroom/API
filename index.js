@@ -36,21 +36,27 @@ app.get('/api/login', function (req, res){
   }
   collection = database.collection("users");
   collection.findOne({"first_name": user.name,"password":user.password}, (error,result)=>{
-    if(username == "" && password == "") {
-      res.json({
-        status: "ERROR",
-        message: "Authentication failed",
-        session_token : ""
-      })
-    }else{
+    if(error){
+      res.json(error)
+    }
+    if(result){
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-      var tokenToHash = username+password+randNum;
+      var tokenToHash = user.name+user.password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
       res.json({
         status: "OK",
         message: "Correct login, token created",
         session_token : token
       })
+    }
+    else{
+      if(username == "" && password == "") {
+        res.json({
+          status: "ERROR",
+          message: "Authentication failed",
+          session_token : ""
+        })
+      }
     }
   });
 });
