@@ -29,9 +29,9 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login', function (req, res){
-  var username = req.body.name;
-  var password = req.body.password;
+app.get('/api/login/:name/:password', function (req, res){
+  var username = req.params.name;
+  var password = req.params.password;
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
     if(username == "" && password == "") {
@@ -44,11 +44,11 @@ app.get('/api/login', function (req, res){
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
       var tokenToHash = username+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
-    res.json({
-      status: "OK",
-      message: "Correct login, token created",
-      session_token : token
-    })
+      res.json({
+        status: "OK",
+        message: "Correct login, token created",
+        session_token : token
+      })
     }
   });
 });
