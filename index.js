@@ -38,7 +38,7 @@ app.get('/api/login', function (req, res){
       res.json({
         status: "ERROR",
         message: "Authentication failed",
-        session_token : token
+        session_token : ""
       })
     }else{
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
@@ -47,7 +47,7 @@ app.get('/api/login', function (req, res){
     res.json({
       status: "OK",
       message: "Correct login, token created",
-      session_token : ""
+      session_token : token
     })
     }
   });
