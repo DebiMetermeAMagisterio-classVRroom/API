@@ -29,11 +29,13 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/:name/:password', function (req, res){
-  var username = req.params.name;
-  var password = req.params.password;
+app.get('/api/login', function (req, res){
+  var user = {
+    name : "Pol",
+    password : "ptj"
+  }
   collection = database.collection("users");
-  collection.findOne({"first_name": username,"password":password}, (error,result)=>{
+  collection.findOne(user, (error,result)=>{
     if(username == "" && password == "") {
       res.json({
         status: "ERROR",
