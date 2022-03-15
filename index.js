@@ -13,7 +13,7 @@ const PORT = process.env.PORT || newLocal;
 const uri = process.env.DB_URI;
 client= null;
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 var database, collection;
 
 
@@ -30,17 +30,17 @@ app.get('/api/get_courses', function (req, res) {
 });
 
 app.get('/api/login', function (req, res){
-  var username = req.query.name;
-  var password = req.query.password;
+  var user = req.query;
   collection = database.collection("users");
-  collection.findOne({"first_name": username,"password":password}, (error,result)=>{
-    if(username == "" && password == "") {
+  collection.findOne({"first_name": user.name,"password":user.password}, (error,result)=>{
+    if(error){
       res.json({
         status: "ERROR",
         message: "Authentication failed",
         session_token : ""
       })
-    }else{
+    }
+    if(result) {
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
       var tokenToHash = username+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
@@ -48,6 +48,12 @@ app.get('/api/login', function (req, res){
         status: "OK",
         message: "Correct login, token created",
         session_token : token
+      })
+    }else{
+      res.json({
+        status: "ERROR",
+        message: "Authentication failed",
+        session_token : ""
       })
     }
   });
