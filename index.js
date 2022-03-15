@@ -13,7 +13,7 @@ const PORT = process.env.PORT || newLocal;
 const uri = process.env.DB_URI;
 client= null;
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+
 var database, collection;
 
 
@@ -30,10 +30,11 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login', function (req, res){
-  var user = req.body;
+app.get('/api/login/:name/:password', function (req, res){
+  var name = req.params.name;
+  var password = req.params.password
   collection = database.collection("users");
-  collection.findOne({"first_name":user.name,"password":user.password}, (error,result)=>{
+  collection.findOne({"first_name":name,"password":password}, (error,result)=>{
     if(error){
       res.json({
         status: "ERROR",
@@ -43,7 +44,7 @@ app.get('/api/login', function (req, res){
     }
     if(result) {
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-      var tokenToHash = user.name+user.password+randNum;
+      var tokenToHash = name+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
       res.json({
         status: "OK",
@@ -53,7 +54,6 @@ app.get('/api/login', function (req, res){
     }else{
       res.json({
         status: "ERROR",
-        query: req.body,
         message: "Authentication failed",
         session_token : ""
       })
