@@ -18,6 +18,7 @@ var database, collection;
 
 
 app.get('/api/get_courses', function (req, res) {
+  collection = database.collection("courses");
   collection.find().toArray((error, result) => {
     if(error) {
         res.send("Error")
@@ -29,9 +30,9 @@ app.get('/api/get_courses', function (req, res) {
 });
 });
 
-app.get('/api/login/:name/:password', function (req, res){
-  var username = req.params.name;
-  var password = req.params.password;
+app.get('/api/login/', function (req, res){
+  var username = req.body.name;
+  var password = req.body.password;
   collection = database.collection("users");
   collection.findOne({"first_name": username,"password":password}, (error,result)=>{
     if(error){
@@ -63,7 +64,6 @@ app.listen(PORT, () => {
         throw error;
     }
     database = client.db(process.env.DB_NAME);
-    collection = database.collection("courses");
     console.log("Connected to database" + "!");
   });
 });
