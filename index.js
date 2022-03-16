@@ -23,6 +23,7 @@ app.use(function(req, res, next) {
 });
 
 app.get('/api/get_courses', function (req, res) {
+  collection = database.collection("courses");
   collection.find().toArray((error, result) => {
     if(error) {
         res.send("Error")
@@ -111,7 +112,6 @@ app.listen(PORT, () => {
         throw error;
     }
     database = client.db(process.env.DB_NAME);
-    collection = database.collection("courses");
     console.log("Connected to database" + "!");
   });
 });
