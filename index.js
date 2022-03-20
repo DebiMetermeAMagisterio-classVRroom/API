@@ -105,6 +105,48 @@ app.get('/api/logout', function (req, res){
 
 });
 
+app.get('/api/export_database', function (req, res){
+  var username = req.query.username;
+  var password = req.query.password;
+  collection = database.collection("users");
+  collection.findOne({"first_name":username,"password":password}, (error,result)=>{
+    if(error){
+      res.json({
+        status: "ERROR",
+        message: "Database error"
+      })
+    }
+    if(result) {
+      collection = database.collection("courses");
+      collection.find().toArray((error, result) =>{
+        if(error){
+          res.json({
+            status: "ERROR",
+            message: "Database error"
+          })
+        }
+        if(result){
+          res.json({
+            status: "OK",
+            message: "Exporting database...",
+            course_list: result
+          })
+        }else{
+          res.json({
+            status: "ERROR",
+            message: "Database error"
+          })
+        }
+      })
+    }else{
+      res.json({
+        status: "ERROR",
+        message: "Database error"
+      })
+    }
+  });
+});
+
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
