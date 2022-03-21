@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const app = express()
 const { MongoClient, ServerApiVersion } = require('mongodb');
+var ObjectId = require('mongodb').ObjectId; 
 
 
 const newLocal = 3001;
@@ -20,20 +21,6 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
-});
-
-app.get('/api/get_courses', function (req, res) {
-  collection = database.collection("courses");
-  collection.find().toArray((error, result) => {
-    if(error) {
-        res.send("Error")
-    }
-    console.log(result)
-    res.json({
-      message: "OK",
-      response: result
-    })
-});
 });
 
 app.get('/api/login', function (req, res){
@@ -63,7 +50,6 @@ app.get('/api/login', function (req, res){
     }else{
       res.json({
         status: "ERROR",
-        query: req.body,
         message: "Authentication failed",
         session_token : ""
       })
@@ -103,6 +89,97 @@ app.get('/api/logout', function (req, res){
     }
   });
 
+});
+
+app.get('/api/get_courses', function (req, res) {
+  var token = req.query.token;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+    if(result){
+      if(token=="" || token == undefined){
+        res.json({
+          status: "Error",
+          message: "session_token is required"
+        })
+      }else{
+        collection = database.collection("courses");
+        collection.find({}).project({_id:1,title:1,description:1,subscribers:1}).toArray((error, result) => {
+          if(error) {
+            res.json({
+              status: "Error",
+              message: "session_token is required"
+            })
+          }
+          if(result){
+            res.json({
+              status: "OK",
+              message: "Connection succesfull,getting courses..",
+              course_list: result
+            })
+          }
+        });
+      }      
+    }
+    else{
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+  });
+});
+
+app.get('/api/get_course_details', function (req, res) {
+  var token = req.query.token;
+  var courseID = req.query.courseID;
+  var userID;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+    if(result){
+      if(token=="" || token == undefined){
+        res.json({
+          status: "Error",
+          message: "session_token is required"
+        })
+      }else{
+        userID=result.id;
+        collection = database.collection("courses");
+        collection.findOne({"_id":ObjectId(courseID)}, (error,result)=>{
+          if(error) {
+            res.json({
+              status: "Error",
+              message: "session_token is required"
+            })
+          }
+          if(result){
+            res.json({
+              status: "OK",
+              message: "Connection succesfull,getting courses..",
+              course_list: result
+            })
+          }
+        });
+      }      
+    }
+    else{
+      res.json({
+        status: "Error",
+        message: "session_token is require"
+      })
+    }
+  });
 });
 
 app.get('/api/export_database', function (req, res){
