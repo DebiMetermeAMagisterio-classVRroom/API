@@ -164,11 +164,18 @@ app.get('/api/get_course_details', function (req, res) {
             })
           }
           if(result){
-            res.json({
-              status: "OK",
-              message: "Connection succesfull,getting courses..",
-              course_list: result
-            })
+            if(result.subscribers["students"].includes(userID)){
+              res.json({
+                status: "OK",
+                message: "Connection succesfull,getting courses..",
+                course_list: result
+              })
+            }else{
+              res.json({
+                status: "Error",
+                message: "Student not subscribed to course selected"
+              })
+            }
           }
         });
       }      
