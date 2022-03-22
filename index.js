@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const app = express()
 const { MongoClient, ServerApiVersion } = require('mongodb');
+var ObjectId = require('mongodb').ObjectId; 
 
 
 const newLocal = 3001;
@@ -13,53 +14,243 @@ const PORT = process.env.PORT || newLocal;
 const uri = process.env.DB_URI;
 client= null;
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+
 var database, collection;
 
-
-app.get('/api/get_courses', function (req, res) {
-  collection.find().toArray((error, result) => {
-    if(error) {
-        res.send("Error")
-    }
-    res.json({
-      message: "OK",
-      response: result
-    })
-});
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
 });
 
 app.get('/api/login', function (req, res){
-  var user = {
-    name : "Pol",
-    password : "ptj"
-  }
+  var username = req.query.username;
+  var password = req.query.password;
   collection = database.collection("users");
-  collection.findOne({"first_name": user.name,"password":user.password}, (error,result)=>{
+  collection.findOne({"first_name":username,"password":password}, (error,result)=>{
     if(error){
-      res.json(error)
+      res.json({
+        status: "ERROR",
+        message: "Authentication failed",
+        session_token : ""
+      })
     }
-    if(result){
+    if(result) {
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-      var tokenToHash = user.name+user.password+randNum;
+      var tokenToHash = username+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
       res.json({
         status: "OK",
         message: "Correct login, token created",
         session_token : token
       })
-    }
-    else{
-      if(username == "" && password == "") {
-        res.json({
-          status: "ERROR",
-          message: "Authentication failed",
-          session_token : ""
-        })
-      }
+      collection.updateOne({"first_name":username,"password":password},{ $set:{"session_token":token}},function(err,res){
+        if(err) throw err;
+      })
+    }else{
+      res.json({
+        status: "ERROR",
+        message: "Authentication failed",
+        session_token : ""
+      })
     }
   });
 });
+
+app.get('/api/logout', function (req, res){
+  var token = req.query.token;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error){
+      res.json({
+        status: "ERROR",
+        message: "Session Token rquired"
+      })
+    }
+    if(result){
+      if(token == undefined || token == ""){
+        res.json({
+          status: "ERROR",
+          message: "Session Token rquired"
+        })
+        }
+        else{
+          res.json({
+            status: "OK",
+            message: "Session succsesfully closed"
+          })
+      }
+    }
+    else{
+        res.json({
+          status: "ERROR",
+          message: "Session Token rquired"
+        })
+    }
+  });
+
+});
+
+app.get('/api/get_courses', function (req, res) {
+  var token = req.query.token;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+    if(result){
+      if(token=="" || token == undefined){
+        res.json({
+          status: "Error",
+          message: "session_token is required"
+        })
+      }else{
+        var user = result;
+        collection = database.collection("courses");
+        collection.find().toArray((error, result) => {
+          if(error) {
+            res.json({
+              status: "Error",
+              message: "session_token is required"
+            })
+          }
+          if(result){
+            var userCourses=[];
+            result.forEach(element => {
+              if(element.subscribers["students"].includes(user.id)){
+                userCourses.push(element)
+              }
+            });
+            res.json({
+              status: "OK",
+              message: "Returning student courses",
+              course_list: userCourses
+            })
+
+          }else{
+            res.json({
+              status: "Error",
+              message: "session_token is required"
+            })
+          }
+        });
+      }      
+    }
+    else{
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+  });
+});
+
+app.get('/api/get_course_details', function (req, res) {
+  var token = req.query.token;
+  var courseID = req.query.courseID;
+  var user;
+  var courseDetails;
+  if(token=="" || token == undefined){
+    res.json({
+      status: "Error",
+      message: "session_token is required"
+    })
+  }
+  if(courseID == "" || courseID == undefined){
+    res.json({
+      status: "Error",
+      message: "Course ID is required"
+    })
+  }
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+    if(result){
+      user= result;
+      collection = database.collection("courses");
+      collection.findOne({"_id":ObjectId(courseID)}, (error,result)=>{
+      if(error) {
+        res.json({
+          status: "Error",
+          message: "Course ID is required"
+        })
+      }
+      if(result){
+        courseDetails = result;
+        if(courseDetails.subscribers["students"].includes(user.id)){
+          res.json({
+            status:"OK",
+            message: "Showing course details",
+            course: courseDetails
+          })
+        }else{
+          res.json({
+            status: "Error",
+            message: "Student is not subscribed to this course"
+          })
+        }
+      }
+    });   
+    }
+    else{
+      res.json({
+        status: "Error",
+        message: "session_token is require"
+      })
+    }
+  });
+});
+
+app.get('/api/export_database', function (req, res){
+  var username = req.query.username;
+  var password = req.query.password;
+  collection = database.collection("users");
+  collection.findOne({"first_name":username,"password":password}, (error,result)=>{
+    if(error){
+      res.json({
+        status: "ERROR",
+        message: "Database error"
+      })
+    }
+    if(result) {
+      collection = database.collection("courses");
+      collection.find().toArray((error, result) =>{
+        if(error){
+          res.json({
+            status: "ERROR",
+            message: "Database error"
+          })
+        }
+        if(result){
+          res.json({
+            status: "OK",
+            message: "Exporting database...",
+            course_list: result
+          })
+        }else{
+          res.json({
+            status: "ERROR",
+            message: "Database error"
+          })
+        }
+      })
+    }else{
+      res.json({
+        status: "ERROR",
+        message: "Database error"
+      })
+    }
+  });
+});
+
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
@@ -67,7 +258,6 @@ app.listen(PORT, () => {
         throw error;
     }
     database = client.db(process.env.DB_NAME);
-    collection = database.collection("courses");
     console.log("Connected to database" + "!");
   });
 });
