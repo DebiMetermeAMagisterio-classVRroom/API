@@ -108,8 +108,9 @@ app.get('/api/get_courses', function (req, res) {
           message: "session_token is required"
         })
       }else{
+        var user = result;
         collection = database.collection("courses");
-        collection.find({}).project({_id:1,title:1,description:1,subscribers:1}).toArray((error, result) => {
+        collection.find().toArray((error, result) => {
           if(error) {
             res.json({
               status: "Error",
@@ -117,10 +118,22 @@ app.get('/api/get_courses', function (req, res) {
             })
           }
           if(result){
+            var userCourses=[];
+            result.forEach(element => {
+              if(element.subscribers["students"].includes(user.id)){
+                userCourses.push(element)
+              }
+            });
             res.json({
               status: "OK",
-              message: "Connection succesfull,getting courses..",
-              course_list: result
+              message: "Returning student courses",
+              course_list: userCourses
+            })
+
+          }else{
+            res.json({
+              status: "Error",
+              message: "session_token is required"
             })
           }
         });
@@ -138,7 +151,20 @@ app.get('/api/get_courses', function (req, res) {
 app.get('/api/get_course_details', function (req, res) {
   var token = req.query.token;
   var courseID = req.query.courseID;
-  var userID;
+  var user;
+  var courseDetails;
+  if(token=="" || token == undefined){
+    res.json({
+      status: "Error",
+      message: "session_token is required"
+    })
+  }
+  if(courseID == "" || courseID == undefined){
+    res.json({
+      status: "Error",
+      message: "Course ID is required"
+    })
+  }
   collection = database.collection("users");
   collection.findOne({"session_token":token}, (error,result)=>{
     if(error) {
@@ -148,37 +174,31 @@ app.get('/api/get_course_details', function (req, res) {
       })
     }
     if(result){
-      if(token=="" || token == undefined){
+      user= result;
+      collection = database.collection("courses");
+      collection.findOne({"_id":ObjectId(courseID)}, (error,result)=>{
+      if(error) {
         res.json({
           status: "Error",
-          message: "session_token is required"
+          message: "Course ID is required"
         })
-      }else{
-        userID=result.id;
-        collection = database.collection("courses");
-        collection.findOne({"_id":ObjectId(courseID)}, (error,result)=>{
-          if(error) {
-            res.json({
-              status: "Error",
-              message: "session_token is required"
-            })
-          }
-          if(result){
-            if(result.subscribers["students"].includes(userID)){
-              res.json({
-                status: "OK",
-                message: "Connection succesfull,getting courses..",
-                course_list: result
-              })
-            }else{
-              res.json({
-                status: "Error",
-                message: "Student not subscribed to course selected"
-              })
-            }
-          }
-        });
-      }      
+      }
+      if(result){
+        courseDetails = result;
+        if(courseDetails.subscribers["students"].includes(user.id)){
+          res.json({
+            status:"OK",
+            message: "Showing course details",
+            course: courseDetails
+          })
+        }else{
+          res.json({
+            status: "Error",
+            message: "Student is not subscribed to this course"
+          })
+        }
+      }
+    });   
     }
     else{
       res.json({
