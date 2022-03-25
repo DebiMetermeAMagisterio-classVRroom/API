@@ -251,6 +251,58 @@ app.get('/api/export_database', function (req, res){
   });
 });
 
+app.get('/api/pin_request', function (req, res) {
+  var token = req.query.token;
+  var taskID = req.query.taskID;
+  collection = database.collection("users");
+  collection.findOne({"session_token":token}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+    if(result){
+      if(token=="" || token == undefined){
+        res.json({
+          status: "Error",
+          message: "session_token is required"
+        })
+      }else{
+        collection = database.collection("courses");
+        collection.findOne({"vr_tasks.ID":taskID}, (error,result)=>{
+          if(error) {
+            res.json({
+              status: "Error",
+              message: "taskID is required"
+            })
+          }
+          if(result){
+            var pin = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
+            res.json({
+              status: "OK",
+              message: "Returning PIN",
+              PIN: pin
+            })
+
+          }else{
+            res.json({
+              status: "Error",
+              message: "taskID is required",
+              result: result
+            })
+          }
+        });
+      }      
+    }
+    else{
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+  });
+});
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
