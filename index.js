@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const app = express()
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { stringify } = require('querystring');
 var ObjectId = require('mongodb').ObjectId; 
 
 
@@ -41,14 +42,15 @@ app.get('/api/login', function (req, res){
       var randNum = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
       var tokenToHash = username+password+randNum;
       var token = crypto.createHash('sha256').update(tokenToHash).digest('hex');
+      const currentDate = new Date();
+      var minutes = process.env.TOKEN_EXPIRATION_TIME / 60000;
+      const newDate = new Date(currentDate.getTime()+minutes * 60000)
+      newDate.setHours(newDate.getHours()+2);
       res.json({
         status: "OK",
         message: "Correct login, token created",
         session_token : token
       })
-      const currentDate = new Date();
-      const newDate = new Date(currentDate.getTime()+process.env.TOKEN_EXPIRATION_TIME)
-      console.log(process.env.TOKEN_EXPIRATION_TIME / 600)
       collection.updateOne({"first_name":username,"password":password},
       { $set:{"session_token":token,"session_token_expiration":newDate}},function(err,res){
         if(err) throw err;
@@ -257,60 +259,109 @@ app.get('/api/export_database', function (req, res){
   });
 });
 
-app.get('/api/pin_request', function (req, res) {
+app.get('/api/pin_request', async function (req, res) {
   var token = req.query.token;
   var taskID = req.query.taskID;
-  collection = database.collection("users");
-  collection.findOne({"session_token":token}, (error,result)=>{
+  var user;
+  var pin_exists = true;
+  users = database.collection("users");
+  courses = database.collection("courses")
+  if(token=="" || token == undefined){
+    res.json({
+      status: "Error",
+      message: "session_token is required"
+    })
+  }
+  if(taskID=="" || taskID == undefined){
+    res.json({
+      status: "Error",
+      message: "taskID is required"
+    })
+  }
+  user = await users.findOne({"session_token":token}, (error,result)=>{
     if(error) {
       res.json({
         status: "Error",
         message: "session_token is required"
       })
     }
-    if(result){
-      if(token=="" || token == undefined){
-        res.json({
-          status: "Error",
-          message: "session_token is required"
-        })
-      }else{
-        collection = database.collection("courses");
-        collection.findOne({"vr_tasks.ID":taskID}, (error,result)=>{
-          if(error) {
-            res.json({
-              status: "Error",
-              message: "taskID is required"
-            })
-          }
-          if(result){
-            var pin = Math.floor(Math.random() * (1000 - 1 + 1) + 1);
-            res.json({
-              status: "OK",
-              message: "Returning PIN",
-              PIN: pin
-            })
-
-          }else{
-            console.log(newDate.toString());
-            res.json({
-              status: "Error",
-              message: "taskID is required",
-              result: result
-            })
-          }
-        });
-      }      
-    }
-    else{
+    else if(result){
+      user = result;   
+    }else{
       res.json({
         status: "Error",
         message: "session_token is required"
       })
     }
   });
+  taskID = parseInt(taskID)
+  var course = await courses.findOne({"vr_tasks.ID":taskID}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "taskID is required"
+      })
+    }
+    if(result){
+      course = result;
+      var pin = "";
+      var vrExID;
+      course.vr_tasks.forEach(element => {
+        if(element.ID == taskID){
+          vrExID = element.VRexID;
+        }
+      });
+      pins = user.pins;
+      //pin = generatePIN();
+      var pins = []
+      user.pins.forEach(element => {
+        pins.push(element.pin)
+      });
+      pin = checkPinExists(pins,pin_exists);
+      console.log(pin)
+      users.updateOne({"first_name":user.first_name,"password":user.password},
+      { $push:{"pins":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID}}},function(err,res){
+        if(err) throw err;
+      })      
+      res.json({
+        status: "OK",
+        message: "Returning PIN",
+        PIN: pin
+      })
+
+    }else{
+      res.json({
+        status: "Error",
+        message: "taskID is required",
+        resCourse: result
+      })
+    }
+  }); 
 });
 
+function generatePIN(){
+  var pin = "";
+  for (let index = 0; index < 4; index++) {
+    pin+= Math.floor(Math.random() * (9 - 1 + 1) + 0);
+  }
+  return pin;
+}
+
+function checkPinExists(array,enter){
+  while(enter){
+    pin = generatePIN();
+    console.log(pin)
+    if(array.length != 0){
+      if(!array.includes(pin)){
+        enter = false;
+      }
+    }else{
+      enter = false;
+    }
+  }
+  console.log(pin)
+  return pin;
+}
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
     if(error) {
