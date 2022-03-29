@@ -359,7 +359,6 @@ function checkPinExists(array,enter){
       enter = false;
     }
   }
-  console.log(pin)
   return pin;
 }
 app.listen(PORT, () => {
