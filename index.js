@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const app = express()
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { stringify } = require('querystring');
+const { url } = require('inspector');
 var ObjectId = require('mongodb').ObjectId; 
 
 
@@ -314,13 +315,15 @@ app.get('/api/pin_request', async function (req, res) {
       pins = user.pins;
       //pin = generatePIN();
       var pins = []
-      user.pins.forEach(element => {
-        pins.push(element.pin)
-      });
+      if(user.pins){
+        user.pins.forEach(element => {
+          pins.push(element.pin)
+        });
+      }
       pin = checkPinExists(pins,pin_exists);
       console.log(pin)
       users.updateOne({"first_name":user.first_name,"password":user.password},
-      { $push:{"pins":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID}}},function(err,res){
+      { $push:{"pins":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID,"used":false}}},function(err,res){
         if(err) throw err;
       })      
       res.json({
@@ -361,6 +364,104 @@ function checkPinExists(array,enter){
   }
   return pin;
 }
+
+app.get('/api/start_vr_exercise', async function (req, res) {
+  var pin = req.query.pin;
+  var user;
+  users = database.collection('users');
+  courses = database.collection('courses');
+  if(pin=="" || pin == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  user = await users.findOne({"pins.pin":pin}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "PIN is required"
+      })
+    }
+    else if(result){
+      user = result;
+      var vrExID;
+      user.pins.forEach(element => {
+        if(element.pin == pin){
+          if(element.used == true){
+            res.json({
+              status: "Error",
+              message: "PIN is already used"
+            })
+          }else{
+            users.updateOne({"pins.pin":element.pin},
+          { $set:{"pins.$.used":true}},function(err,res){
+            if(err) throw err;
+          }) 
+          vrExID= element.vrExID;
+          }
+        }
+      });
+      res.json({
+        status: "OK",
+        message: "Correct PIN",
+        username: user.first_name + " "+user.last_name,
+        VRexerciseID: vrExID
+      })  
+    }else{
+      res.json({
+        status: "Error",
+        message: "PIN is required"
+      })
+    }
+  });
+});
+
+// app.post('/api/finish_vr_exercise', async function (req, res) {
+//   var pin = req.query.pin;
+//   var autograde = JSON.parse(req.query.autograde);
+//   var VRexerciseID = req.query.VRexerciseID;
+//   var exVersion = req.query.exVersion;
+//   var performance_data = JSON.parse(req.query.performance_data);  
+//   // users = database.collection('users');
+//   // courses = database.collection('courses');
+//   // if(pin=="" || pin == undefined){
+//   //   res.json({
+//   //     status: "Error",
+//   //     message: "PIN is required"
+//   //   })
+//   // }
+//   // user = await users.findOne({"pins.pin":pin}, (error,result)=>{
+//   //   if(error) {
+//   //     res.json({
+//   //       status: "Error",
+//   //       message: "PIN is required"
+//   //     })
+//   //   }
+//   //   else if(result){
+//   //     user = result;
+//   //     var vrExID;
+//   //     user.pins.forEach(element => {
+//   //       if(element.pin == pin){
+//   //         vrExID= element.vrExID;
+//   //       }
+//   //     });
+//   //     res.json({
+//   //       status: "OK",
+//   //       message: "Correct PIN",
+//   //       username: user.first_name + " "+user.last_name,
+//   //       VRexerciseID: vrExID
+//   //     })  
+      
+//   //   }else{
+//   //     res.json({
+//   //       status: "Error",
+//   //       message: "session_token is required"
+//   //     })
+//   //   }
+//   // });
+// });
+
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
     if(error) {
