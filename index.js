@@ -307,9 +307,11 @@ app.get('/api/pin_request', async function (req, res) {
       course = result;
       var pin = "";
       var vrExID;
+      var vrExVersion;
       course.vr_tasks.forEach(element => {
         if(element.ID == taskID){
           vrExID = element.VRexID;
+          vrExVersion = element.versionID;
         }
       });
       pins = user.pins;
@@ -323,7 +325,7 @@ app.get('/api/pin_request', async function (req, res) {
       pin = checkPinExists(pins,pin_exists);
       console.log(pin)
       users.updateOne({"first_name":user.first_name,"password":user.password},
-      { $push:{"pins":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID,"used":false}}},function(err,res){
+      { $push:{"pins":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID,"versionID":vrExVersion,"used":false}}},function(err,res){
         if(err) throw err;
       })      
       res.json({
@@ -353,7 +355,6 @@ function generatePIN(){
 function checkPinExists(array,enter){
   while(enter){
     pin = generatePIN();
-    console.log(pin)
     if(array.length != 0){
       if(!array.includes(pin)){
         enter = false;
@@ -385,7 +386,8 @@ app.get('/api/start_vr_exercise', async function (req, res) {
     }
     else if(result){
       user = result;
-      var vrExID;
+      var vrExID;      
+      var vrExVersion;
       user.pins.forEach(element => {
         if(element.pin == pin){
           if(element.used == true){
@@ -399,6 +401,7 @@ app.get('/api/start_vr_exercise', async function (req, res) {
             if(err) throw err;
           }) 
           vrExID= element.vrExID;
+          vrExVersion = element.versionID;
           }
         }
       });
@@ -406,7 +409,8 @@ app.get('/api/start_vr_exercise', async function (req, res) {
         status: "OK",
         message: "Correct PIN",
         username: user.first_name + " "+user.last_name,
-        VRexerciseID: vrExID
+        VRexerciseID: vrExID,
+        minExVersion: vrExVersion
       })  
     }else{
       res.json({
@@ -417,50 +421,74 @@ app.get('/api/start_vr_exercise', async function (req, res) {
   });
 });
 
-// app.post('/api/finish_vr_exercise', async function (req, res) {
-//   var pin = req.query.pin;
-//   var autograde = JSON.parse(req.query.autograde);
-//   var VRexerciseID = req.query.VRexerciseID;
-//   var exVersion = req.query.exVersion;
-//   var performance_data = JSON.parse(req.query.performance_data);  
-//   // users = database.collection('users');
-//   // courses = database.collection('courses');
-//   // if(pin=="" || pin == undefined){
-//   //   res.json({
-//   //     status: "Error",
-//   //     message: "PIN is required"
-//   //   })
-//   // }
-//   // user = await users.findOne({"pins.pin":pin}, (error,result)=>{
-//   //   if(error) {
-//   //     res.json({
-//   //       status: "Error",
-//   //       message: "PIN is required"
-//   //     })
-//   //   }
-//   //   else if(result){
-//   //     user = result;
-//   //     var vrExID;
-//   //     user.pins.forEach(element => {
-//   //       if(element.pin == pin){
-//   //         vrExID= element.vrExID;
-//   //       }
-//   //     });
-//   //     res.json({
-//   //       status: "OK",
-//   //       message: "Correct PIN",
-//   //       username: user.first_name + " "+user.last_name,
-//   //       VRexerciseID: vrExID
-//   //     })  
+app.post('/api/finish_vr_exercise', async function (req, res) {
+  var pin = req.query.pin;
+  var autograde = JSON.parse(req.query.autograde);
+  var VRexerciseID = req.query.VRexerciseID;
+  var exVersion = req.query.exVersion;
+  //var performance_data = JSON.parse(req.query.performance_data);  
+  users = database.collection('users');
+  courses = database.collection('courses');
+  if(pin=="" || pin == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  if(autograde=={} || autograde == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  if(VRexerciseID=="" || VRexerciseID == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  if(exVersion=="" || exVersion == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  if(performance_data== {} || performance_data == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
+  user = await users.findOne({"pins.pin":pin}, (error,result)=>{
+    if(error) {
+      res.json({
+        status: "Error",
+        message: "PIN is required"
+      })
+    }
+    else if(result){
+      user = result;
+      var vrExID;
+      user.pins.forEach(element => {
+        if(element.pin == pin){
+          vrExID= element.vrExID;
+        }
+      });
+      res.json({
+        status: "OK",
+        message: "Correct PIN",
+        username: user.first_name + " "+user.last_name,
+        VRexerciseID: vrExID
+      })  
       
-//   //   }else{
-//   //     res.json({
-//   //       status: "Error",
-//   //       message: "session_token is required"
-//   //     })
-//   //   }
-//   // });
-// });
+    }else{
+      res.json({
+        status: "Error",
+        message: "session_token is required"
+      })
+    }
+  });
+});
 
 app.listen(PORT, () => {
   MongoClient.connect(uri, { useNewUrlParser: true, serverApi: ServerApiVersion.v1  }, (error, client) => {
