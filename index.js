@@ -455,12 +455,12 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
       message: "PIN is required"
     })
   }
-  // if(performance_data== {} || performance_data == undefined){
-  //   res.json({
-  //     status: "Error",
-  //     message: "PIN is required"
-  //   })
-  // }
+  if(performance_data== {} || performance_data == undefined){
+    res.json({
+      status: "Error",
+      message: "PIN is required"
+    })
+  }
   user = await users.findOne({"pins.pin":pin}, (error,result)=>{
     if(error) {
       res.json({
