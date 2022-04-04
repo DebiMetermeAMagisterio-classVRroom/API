@@ -424,9 +424,11 @@ app.get('/api/start_vr_exercise', async function (req, res) {
 app.post('/api/finish_vr_exercise', async function (req, res) {
   var pin = req.query.pin;
   var autograde = JSON.parse(req.query.autograde);
-  var VRexerciseID = req.query.VRexerciseID;
-  var exVersion = req.query.exVersion;
-  //var performance_data = JSON.parse(req.query.performance_data);  
+  var VRexerciseID = parseInt(req.query.VRexerciseID);
+  var exVersion = parseInt(req.query.exVersion);
+  var user_data;
+  var user;
+  // var performance_data = JSON.parse(req.query.performance_data);  
   users = database.collection('users');
   courses = database.collection('courses');
   if(pin=="" || pin == undefined){
@@ -436,10 +438,10 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
     })
   }
   if(autograde=={} || autograde == undefined){
-    res.json({
-      status: "Error",
-      message: "PIN is required"
-    })
+     res.json({
+       status: "Error",
+       message: "PIN is required"
+     })
   }
   if(VRexerciseID=="" || VRexerciseID == undefined){
     res.json({
@@ -453,12 +455,12 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
       message: "PIN is required"
     })
   }
-  if(performance_data== {} || performance_data == undefined){
-    res.json({
-      status: "Error",
-      message: "PIN is required"
-    })
-  }
+  // if(performance_data== {} || performance_data == undefined){
+  //   res.json({
+  //     status: "Error",
+  //     message: "PIN is required"
+  //   })
+  // }
   user = await users.findOne({"pins.pin":pin}, (error,result)=>{
     if(error) {
       res.json({
@@ -468,26 +470,33 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
     }
     else if(result){
       user = result;
-      var vrExID;
       user.pins.forEach(element => {
         if(element.pin == pin){
-          vrExID= element.vrExID;
+          user_data = element;
         }
       });
-      res.json({
-        status: "OK",
-        message: "Correct PIN",
-        username: user.first_name + " "+user.last_name,
-        VRexerciseID: vrExID
-      })  
-      
     }else{
       res.json({
         status: "Error",
-        message: "session_token is required"
+        message: "PIN is required"
       })
     }
   });
+  console.log(user)
+  // course = await courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion},
+  // { $push:{"vr_tasks.completions":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID,"versionID":vrExVersion,"used":false}}},(error,result)=>{
+  //   if(error){
+
+  //   }
+  //   else if(result){
+  //     course = result;
+  //     res.json({
+  //       message: course
+  //     })
+  //   }else{
+
+  //   }
+  // });
 });
 
 app.listen(PORT, () => {
