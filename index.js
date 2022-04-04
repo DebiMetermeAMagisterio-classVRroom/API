@@ -426,9 +426,9 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
   var autograde = JSON.parse(req.query.autograde);
   var VRexerciseID = parseInt(req.query.VRexerciseID);
   var exVersion = parseInt(req.query.exVersion);
+  var performance_data = JSON.parse(req.query.performance_data);  
   var user_data;
   var user;
-  // var performance_data = JSON.parse(req.query.performance_data);  
   users = database.collection('users');
   courses = database.collection('courses');
   if(pin=="" || pin == undefined){
@@ -475,6 +475,20 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
           user_data = element;
         }
       });
+      course = courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion,"vr_tasks.ID":user_data.vr_taskID},
+      { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde,"performance_data":performance_data}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
+        if(error){
+
+        }
+        else if(result){
+          course = result;
+          res.json({
+            message: "Done"
+          })
+        }else{
+
+        }
+      });
     }else{
       res.json({
         status: "Error",
@@ -482,21 +496,6 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
       })
     }
   });
-  console.log(user)
-  // course = await courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion},
-  // { $push:{"vr_tasks.completions":{"pin":pin,"vr_taskID":taskID,"vrExID":vrExID,"versionID":vrExVersion,"used":false}}},(error,result)=>{
-  //   if(error){
-
-  //   }
-  //   else if(result){
-  //     course = result;
-  //     res.json({
-  //       message: course
-  //     })
-  //   }else{
-
-  //   }
-  // });
 });
 
 app.listen(PORT, () => {
