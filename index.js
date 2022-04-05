@@ -426,7 +426,7 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
   var autograde = JSON.parse(req.query.autograde);
   var VRexerciseID = parseInt(req.query.VRexerciseID);
   var exVersion = parseInt(req.query.exVersion);
-  var performance_data = JSON.parse(req.query.performance_data);  
+  //var performance_data = JSON.parse(req.query.performance_data);  
   var user_data;
   var user;
   users = database.collection('users');
@@ -455,12 +455,12 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
       message: "ExcerciseVersion is required"
     })
   }
-  if(performance_data== {} || performance_data == undefined){
-    res.json({
-      status: "Error",
-      message: "Performance_data is required"
-    })
-  }
+  // if(performance_data== {} || performance_data == undefined){
+  //   res.json({
+  //     status: "Error",
+  //     message: "Performance_data is required"
+  //   })
+  // }
   user = await users.findOne({"pins.pin":pin}, (error,result)=>{
     if(error) {
       res.json({
@@ -476,7 +476,7 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
         }
       });
       course = courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion,"vr_tasks.ID":user_data.vr_taskID},
-      { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde,"performance_data":performance_data}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
+      { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
         if(error){
 
         }
