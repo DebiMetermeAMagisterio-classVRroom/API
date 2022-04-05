@@ -422,82 +422,79 @@ app.get('/api/start_vr_exercise', async function (req, res) {
 });
 
 app.post('/api/finish_vr_exercise', async function (req, res) {
-  var pin = String(req.body.pin);
-  var autograde = req.body.autograde;
-  var VRexerciseID = parseInt(req.body.VRexerciseID);
-  var exVersion = parseInt(req.body.exVersion);
-  console.log(pin)
-  //var performance_data = JSON.parse(req.query.performance_data);  
-  var user_data;
-  var user;
-  users = database.collection('users');
-  courses = database.collection('courses');
-  if(pin=="" || pin == undefined){
-    res.json({
-      status: "Error",
-      message: "PIN is required"
-    })
-  }
-  if(autograde=={} || autograde == undefined){
-     res.json({
-       status: "Error",
-       message: "autograde is required"
-     })
-  }
-  if(VRexerciseID=="" || VRexerciseID == undefined){
-    res.json({
-      status: "Error",
-      message: "VrExcerciseID is required"
-    })
-  }
-  if(exVersion=="" || exVersion == undefined){
-    res.json({
-      status: "Error",
-      message: "ExcerciseVersion is required"
-    })
-  }
-  // if(performance_data== {} || performance_data == undefined){
-  //   res.json({
-  //     status: "Error",
-  //     message: "Performance_data is required"
-  //   })
-  // }
-  user = await users.findOne({"pins.pin":pin}, (error,result)=>{
-    if(error) {
+  try{
+    var pin = req.query.pin;
+    var autograde = JSON.parse(req.query.autograde);
+    var VRexerciseID = parseInt(req.query.VRexerciseID);
+    var exVersion = parseInt(req.query.exVersion);
+    var user_data;
+    var user;
+    users = database.collection('users');
+    courses = database.collection('courses');
+    if(pin=="" || pin == undefined){
       res.json({
         status: "Error",
-        message: "PIN is required"
+        message: "PIN user is required"
       })
     }
-    else if(result){
-      user = result;
-      user.pins.forEach(element => {
-        if(element.pin == pin){
-          user_data = element;
-        }
-      });
-      course = courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion,"vr_tasks.ID":user_data.vr_taskID},
-      { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
-        if(error){
-
-        }
-        else if(result){
-          course = result;
-          res.json({
-            status: "OK",
-            message: "Exercise data successfully stored"
-          })
-        }else{
-
-        }
-      });
-    }else{
+    if(autograde=={} || autograde == undefined){
       res.json({
         status: "Error",
-        message: "PIN is required"
+        message: "autograde is required"
       })
     }
-  });
+    if(VRexerciseID=="" || VRexerciseID == undefined){
+      res.json({
+        status: "Error",
+        message: "VrExcerciseID is required"
+      })
+    }
+    if(exVersion=="" || exVersion == undefined){
+      res.json({
+        status: "Error",
+        message: "ExcerciseVersion is required"
+      })
+    }
+    user = await users.findOne({"pins.pin":pin}, (error,result)=>{
+      if(error) {
+        res.json({
+          status: "Error",
+          message: "PIN is required"
+        })
+      }
+      else if(result){
+        user = result;
+        user.pins.forEach(element => {
+          if(element.pin == pin){
+            user_data = element;
+          }
+        });
+        course = courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion,"vr_tasks.ID":user_data.vr_taskID},
+        { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
+          if(error){
+
+          }
+          else if(result){
+            course = result;
+            res.json({
+              status: "OK",
+              message: "Exercise data successfully stored"
+            })
+          }else{
+
+          }
+        });
+      }else{
+        res.json({
+          status: "Error",
+          message: "uknown error"
+        })
+      }
+    });
+  }catch(error){
+    console.log(error)
+  }
+  
 });
 
 app.listen(PORT, () => {
