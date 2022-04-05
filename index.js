@@ -422,10 +422,11 @@ app.get('/api/start_vr_exercise', async function (req, res) {
 });
 
 app.post('/api/finish_vr_exercise', async function (req, res) {
-  var pin = req.query.pin;
-  var autograde = JSON.parse(req.query.autograde);
-  var VRexerciseID = parseInt(req.query.VRexerciseID);
-  var exVersion = parseInt(req.query.exVersion);
+  var pin = String(req.body.pin);
+  var autograde = req.body.autograde;
+  var VRexerciseID = parseInt(req.body.VRexerciseID);
+  var exVersion = parseInt(req.body.exVersion);
+  console.log(pin)
   //var performance_data = JSON.parse(req.query.performance_data);  
   var user_data;
   var user;
