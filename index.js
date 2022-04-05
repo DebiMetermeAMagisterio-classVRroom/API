@@ -440,25 +440,25 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
   if(autograde=={} || autograde == undefined){
      res.json({
        status: "Error",
-       message: "PIN is required"
+       message: "autograde is required"
      })
   }
   if(VRexerciseID=="" || VRexerciseID == undefined){
     res.json({
       status: "Error",
-      message: "PIN is required"
+      message: "VrExcerciseID is required"
     })
   }
   if(exVersion=="" || exVersion == undefined){
     res.json({
       status: "Error",
-      message: "PIN is required"
+      message: "ExcerciseVersion is required"
     })
   }
   if(performance_data== {} || performance_data == undefined){
     res.json({
       status: "Error",
-      message: "PIN is required"
+      message: "Performance_data is required"
     })
   }
   user = await users.findOne({"pins.pin":pin}, (error,result)=>{
@@ -483,6 +483,7 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
         else if(result){
           course = result;
           res.json({
+            status: "Exercise data successfully stored.",
             message: "Done"
           })
         }else{
