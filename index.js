@@ -483,8 +483,8 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
         else if(result){
           course = result;
           res.json({
-            status: "Exercise data successfully stored.",
-            message: "Done"
+            status: "OK",
+            message: "Exercise data successfully stored"
           })
         }else{
 
