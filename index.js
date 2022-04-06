@@ -423,12 +423,13 @@ app.get('/api/start_vr_exercise', async function (req, res) {
 
 app.post('/api/finish_vr_exercise', async function (req, res) {
   try{
-    var pin = req.query.pin;
-    var autograde = JSON.parse(req.query.autograde);
-    var VRexerciseID = parseInt(req.query.VRexerciseID);
-    var exVersion = parseInt(req.query.exVersion);
+    var pin = req.body.pin;
+    var autograde = req.body.autograde;
+    var VRexerciseID = parseInt(req.body.VRexerciseID);
+    var exVersion = parseInt(req.body.exVersion);
     var user_data;
     var user;
+    
     users = database.collection('users');
     courses = database.collection('courses');
     if(pin=="" || pin == undefined){
@@ -469,7 +470,8 @@ app.post('/api/finish_vr_exercise', async function (req, res) {
             user_data = element;
           }
         });
-        course = courses.updateOne({"vr_tasks.VRexID":VRexerciseID,"vr_tasks.versionID":exVersion,"vr_tasks.ID":user_data.vr_taskID},
+        console.log(user_data)
+        course = courses.findOneAndUpdate({"vr_tasks.ID":user_data.vr_taskID},
         { $push:{"vr_tasks.$[elem].completions":{"studentID":user.id,"autograde":autograde}}},{arrayFilters:[{"elem.ID":user_data.vr_taskID}]},(error,result)=>{
           if(error){
 
